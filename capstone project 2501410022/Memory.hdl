@@ -1,0 +1,20 @@
+// Memory.hdl -- Hack data memory
+// 0..16383 RAM16K, 16384..24575 Screen, 24576 Keyboard
+
+CHIP Memory {
+    IN  in[16], load, address[15];
+    OUT out[16];
+
+    PARTS:
+    // address[14]=0 -> RAM, address[14]=1 -> Screen/Keyboard
+    DMux(in=load, sel=address[14], a=loadRam, b=loadIO);
+    RAM16K(in=in, load=loadRam, address=address[0..13], out=ramOut);
+
+    // within I/O: address[13]=0 -> Screen, address[13]=1 -> Keyboard (read-only)
+    DMux(in=loadIO, sel=address[13], a=loadScreen, b=loadKbd);
+    Screen(in=in, load=loadScreen, address=address[0..12], out=screenOut);
+    Keyboard(out=kbdOut);
+
+    Mux16(a=screenOut, b=kbdOut, sel=address[13], out=ioOut);
+    Mux16(a=ramOut, b=ioOut, sel=address[14], out=out);
+}
